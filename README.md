@@ -64,12 +64,34 @@ outputs/debug_run/
 Each line in `records.jsonl` is one VLA-ready frame record. The schema is
 documented in [docs/data_schema.md](docs/data_schema.md).
 
+## Visualization
+
+After processing a video, generate a standalone HTML report to inspect the
+structured records and frame previews:
+
+```bash
+ego-vla visualize-data outputs/debug_run --output outputs/debug_run/report.html
+```
+
+To audit pose quality visually, render an MP4 with 2D body pose and hand
+landmarks drawn over the exported sampled frames:
+
+```bash
+ego-vla render-pose outputs/debug_run --output outputs/debug_run/pose_overlay.mp4
+```
+
+The overlay uses `body_pose_2d` and hand landmarks. It does not project
+MediaPipe world landmarks back to pixels unless a 2D estimate is present,
+because metric 3D projection requires camera calibration.
+
 ## Commands
 
 ```bash
 ego-vla init-config configs/local.json
 ego-vla process video.mp4 --output outputs/run --config configs/default.json
 ego-vla inspect outputs/run
+ego-vla visualize-data outputs/run --output outputs/run/report.html
+ego-vla render-pose outputs/run --output outputs/run/pose_overlay.mp4
 ego-vla schema
 ```
 

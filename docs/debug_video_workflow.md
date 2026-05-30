@@ -38,14 +38,17 @@ ego-vla process input.mp4 --output outputs/input_no_pose --pose-backend none --m
 
 ```bash
 ego-vla inspect outputs/input_debug
+ego-vla visualize-data outputs/input_debug --output outputs/input_debug/report.html
+ego-vla render-pose outputs/input_debug --output outputs/input_debug/pose_overlay.mp4
 ```
 
-Open `records.jsonl` and check:
+Open `report.html`, `pose_overlay.mp4`, and `records.jsonl`, then check:
 
 - timestamps are monotonic;
 - frame paths exist under `frames/`;
 - warnings explain missing hands/body pose;
 - pose coordinates include a clear `coordinate_frame`;
+- the overlay video draws landmarks where detection succeeded;
 - provenance records each backend.
 
 ## 4. Improve data quality

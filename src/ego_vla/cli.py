@@ -8,6 +8,7 @@ from ego_vla.config import load_config, write_default_config
 from ego_vla.export import count_jsonl_records, iter_jsonl
 from ego_vla.pipeline import EgoVlaPipeline
 from ego_vla.schemas import json_schema_example
+from ego_vla.visualization import render_pose_overlay_video, write_dataset_report
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -32,6 +33,24 @@ def main(argv: list[str] | None = None) -> int:
 
     inspect_parser = subparsers.add_parser("inspect", help="Summarize an output dataset directory.")
     inspect_parser.add_argument("dataset_dir", type=Path)
+
+    report_parser = subparsers.add_parser(
+        "visualize-data",
+        help="Write an HTML report for a processed dataset.",
+    )
+    report_parser.add_argument("dataset_dir", type=Path)
+    report_parser.add_argument("--output", "-o", type=Path, default=None)
+    report_parser.add_argument("--max-records", type=int, default=25)
+
+    render_parser = subparsers.add_parser(
+        "render-pose",
+        help="Render body and hand landmarks over exported frames.",
+    )
+    render_parser.add_argument("dataset_dir", type=Path)
+    render_parser.add_argument("--output", "-o", type=Path, default=None)
+    render_parser.add_argument("--fps", type=float, default=None)
+    render_parser.add_argument("--max-frames", type=int, default=None)
+    render_parser.add_argument("--min-confidence", type=float, default=0.0)
 
     subparsers.add_parser("schema", help="Print an example VLA frame record.")
 
@@ -68,6 +87,26 @@ def main(argv: list[str] | None = None) -> int:
             "first_frame_id": first.get("frame_id") if first else None,
             "first_timestamp_sec": first.get("timestamp_sec") if first else None,
         }
+        print(json.dumps(summary, indent=2))
+        return 0
+
+    if args.command == "visualize-data":
+        summary = write_dataset_report(
+            args.dataset_dir,
+            output_path=args.output,
+            max_records=args.max_records,
+        )
+        print(json.dumps(summary, indent=2))
+        return 0
+
+    if args.command == "render-pose":
+        summary = render_pose_overlay_video(
+            args.dataset_dir,
+            output_path=args.output,
+            fps=args.fps,
+            max_frames=args.max_frames,
+            min_confidence=args.min_confidence,
+        )
         print(json.dumps(summary, indent=2))
         return 0
 
