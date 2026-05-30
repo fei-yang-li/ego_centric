@@ -10,6 +10,7 @@ dist/
 outputs/
 data/
 *.mp4
+!tests/*.mp4
 *.mov
 *.avi
 *.mkv

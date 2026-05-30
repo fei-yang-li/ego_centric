@@ -27,6 +27,7 @@ def main(argv: list[str] | None = None) -> int:
     process_parser.add_argument("--sample-rate", type=float, default=None)
     process_parser.add_argument("--max-frames", type=int, default=None)
     process_parser.add_argument("--pose-backend", choices=["mediapipe", "none"], default=None)
+    process_parser.add_argument("--pose-model", type=Path, default=None, help="Path to a MediaPipe .task model asset.")
     process_parser.add_argument("--language-instruction", type=str, default=None)
 
     inspect_parser = subparsers.add_parser("inspect", help="Summarize an output dataset directory.")
@@ -49,6 +50,8 @@ def main(argv: list[str] | None = None) -> int:
             config.video.max_frames = args.max_frames
         if args.pose_backend is not None:
             config.pose.backend = args.pose_backend
+        if args.pose_model is not None:
+            config.pose.model_asset_path = str(args.pose_model)
         if args.language_instruction is not None:
             config.dataset.language_instruction = args.language_instruction
         metadata = EgoVlaPipeline(config).process(args.video, args.output)

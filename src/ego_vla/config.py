@@ -34,6 +34,8 @@ class PoseConfig:
     model_complexity: int = 1
     min_detection_confidence: float = 0.5
     min_tracking_confidence: float = 0.5
+    model_asset_path: str | None = None
+    auto_download_model: bool = True
 
 
 @dataclass(slots=True)

@@ -19,7 +19,9 @@
     "backend": "mediapipe",
     "model_complexity": 1,
     "min_detection_confidence": 0.5,
-    "min_tracking_confidence": 0.5
+    "min_tracking_confidence": 0.5,
+    "model_asset_path": null,
+    "auto_download_model": true
   },
   "depth": {
     "backend": "none"

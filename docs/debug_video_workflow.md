@@ -22,6 +22,12 @@ Edit `configs/local.json`:
 ego-vla process input.mp4 --output outputs/input_debug --config configs/local.json
 ```
 
+For MediaPipe Tasks, either rely on automatic model download or pass a local model:
+
+```bash
+ego-vla process input.mp4 --output outputs/input_debug --pose-model /path/to/holistic_landmarker.task
+```
+
 For a dependency-light smoke test:
 
 ```bash

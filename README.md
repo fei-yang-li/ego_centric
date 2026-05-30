@@ -44,6 +44,12 @@ If you only want to test the pipeline without installing MediaPipe, set
 ego-vla process /path/to/video.mp4 --output outputs/no_pose --pose-backend none
 ```
 
+With current MediaPipe releases, the pipeline uses the Tasks API and will
+automatically download the official holistic landmarker `.task` model into
+`~/.cache/ego_vla/models/` unless `pose.model_asset_path` is set. On Linux,
+MediaPipe may also require `libEGL.so.1`; install it with `sudo apt-get install -y libegl1`
+if model initialization fails with a `libEGL` error.
+
 ## Output layout
 
 ```text
