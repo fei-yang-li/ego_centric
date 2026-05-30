@@ -1,0 +1,38 @@
+{
+  "dataset": {
+    "name": "egocentric_vla_debug",
+    "episode_id": null,
+    "language_instruction": null,
+    "operator_id": null
+  },
+  "video": {
+    "sample_rate_hz": 5.0,
+    "max_frames": null,
+    "image_format": "jpg",
+    "jpeg_quality": 95
+  },
+  "camera": {
+    "intrinsics": null,
+    "coordinate_frame": "camera"
+  },
+  "pose": {
+    "backend": "mediapipe",
+    "model_complexity": 1,
+    "min_detection_confidence": 0.5,
+    "min_tracking_confidence": 0.5,
+    "model_asset_path": null,
+    "auto_download_model": true
+  },
+  "depth": {
+    "backend": "none"
+  },
+  "ego_motion": {
+    "backend": "none"
+  },
+  "objects": {
+    "backend": "none"
+  },
+  "actions": {
+    "backend": "none"
+  }
+}
