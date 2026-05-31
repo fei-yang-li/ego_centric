@@ -1,6 +1,8 @@
 # VLA frame record schema
 
-The pipeline writes one JSON object per sampled frame to `records.jsonl`.
+The pipeline writes one JSON object per sampled frame to `records.jsonl`. When a
+clip (action) stage is enabled, it additionally writes one clip per line to
+`segments.jsonl` (see [Segment records](#segment-records)).
 
 ## Top-level fields
 
@@ -74,5 +76,46 @@ training data, add calibration and a metric reconstruction backend:
     "pipeline_version": "0.1.0",
     "pose_backend": "mediapipe"
   }
+}
+```
+
+## Segment records
+
+When a clip (action) stage produces segments, each is written as one JSON
+object per line in `segments.jsonl`. A segment is a contiguous slice of frames
+with an optional action label, language instruction, and free-text caption.
+
+| Field | Type | Purpose |
+| --- | --- | --- |
+| `segment_id` | string | Stable id in `{episode_id}/seg_{ordinal}` form. |
+| `episode_id` | string | Episode the segment belongs to. |
+| `start_sec` / `end_sec` | float | Clip time span in the source video. |
+| `start_frame` / `end_frame` | integer | Original video frame indices. |
+| `frame_ids` | array | `frame_id`s of the member frame records. |
+| `key_frame_ids` | array | Representative frames (e.g. first/middle/last). |
+| `label` | string/null | Discrete action label (closed-set), if any. |
+| `instruction` | string/null | Natural-language instruction for the clip. |
+| `caption` | string/null | Free-text description of the clip. |
+| `objects` | array | Object labels involved in the clip. |
+| `confidence` | float/null | Backend confidence. |
+| `status` | string | `ok`, `heuristic`, etc. |
+| `source` | object | Segmenter/captioner names, params, model + version. |
+| `notes` | array | Caveats (e.g. placeholder caption). |
+
+```json
+{
+  "segment_id": "debug_video/seg_0000",
+  "episode_id": "debug_video",
+  "start_sec": 0.0,
+  "end_sec": 1.8,
+  "start_frame": 0,
+  "end_frame": 54,
+  "frame_ids": ["debug_video/000000", "debug_video/000001"],
+  "key_frame_ids": ["debug_video/000000", "debug_video/000001"],
+  "instruction": "pick up the mug from the table",
+  "caption": "the camera wearer reaches for and lifts a mug",
+  "objects": ["mug"],
+  "status": "ok",
+  "source": {"segmenter": "fixed_window", "captioner": "qwen_vl", "model": "Qwen2.5-VL-7B"}
 }
 ```

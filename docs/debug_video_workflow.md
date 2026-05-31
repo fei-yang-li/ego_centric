@@ -54,7 +54,9 @@ Open `report.html`, `pose_overlay.mp4`, and `records.jsonl`, then check:
 ## 4. Improve data quality
 
 First-person handheld videos often need additional modules before the data is
-ready for serious VLA training:
+ready for serious VLA training. These plug in as pipeline stages — see
+[architecture.md](architecture.md) for the stage model and how to add a backend,
+and run `ego-vla list-backends` to see what is registered:
 
 - add object detection and tracking for manipulated objects;
 - add depth and camera trajectory for spatial reasoning;
