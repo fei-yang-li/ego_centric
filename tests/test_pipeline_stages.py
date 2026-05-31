@@ -70,6 +70,58 @@ class PipelineStageTests(unittest.TestCase):
             self.assertEqual(first["ego_motion"]["status"], "not_computed")
             self.assertEqual(first["provenance"]["calibration_backend"], "none")
 
+    def test_pinhole_prior_and_opencv_vo_produce_trajectory(self) -> None:
+        config = ProcessingConfig()
+        config.pose.backend = "none"
+        config.calibration.backend = "pinhole_prior"
+        config.ego_motion.backend = "opencv_vo"
+        config.video.max_frames = 5
+        config.video.sample_rate_hz = 4.0
+
+        with tempfile.TemporaryDirectory() as tmp:
+            dataset_dir = Path(tmp) / "ds"
+            metadata = EgoVlaPipeline(config).process(FIXTURE, dataset_dir)
+            records = [
+                json.loads(line)
+                for line in (dataset_dir / "records.jsonl").read_text().splitlines()
+            ]
+            self.assertTrue(all(r["ego_motion"]["backend"] == "opencv_vo" for r in records))
+            self.assertEqual(metadata["calibration"]["backend"], "pinhole_prior")
+            self.assertEqual(metadata["stage_outputs"]["ego_motion"]["backend"], "opencv_vo")
+
+    def test_object_record_processor_fills_objects(self) -> None:
+        from ego_vla.backends._common import IoUTracker
+        from ego_vla.backends.objects import DetectionTrackProcessor
+        from ego_vla.stages import OBJECT_BACKENDS
+
+        def _fake_factory(section, config):
+            def detector(frame_bgr, frame_index):
+                height, width = frame_bgr.shape[:2]
+                return [
+                    {
+                        "label": "cup",
+                        "bbox_xyxy": [1.0, 1.0, width / 2.0, height / 2.0],
+                        "confidence": 0.9,
+                    }
+                ]
+
+            return DetectionTrackProcessor(detector, IoUTracker(), "fake_objects")
+
+        OBJECT_BACKENDS.register("test_fake_objects", _fake_factory, override=True)
+
+        config = ProcessingConfig()
+        config.pose.backend = "none"
+        config.objects.backend = "test_fake_objects"
+        config.video.max_frames = 3
+
+        with tempfile.TemporaryDirectory() as tmp:
+            dataset_dir = Path(tmp) / "ds"
+            metadata = EgoVlaPipeline(config).process(FIXTURE, dataset_dir)
+            first = json.loads((dataset_dir / "records.jsonl").read_text().splitlines()[0])
+            self.assertEqual(first["objects"][0]["label"], "cup")
+            self.assertIn("track_id", first["objects"][0])
+            self.assertEqual(metadata["stage_outputs"]["objects"]["backend"], "fake_objects")
+
 
 if __name__ == "__main__":
     unittest.main()

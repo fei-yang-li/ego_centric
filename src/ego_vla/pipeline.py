@@ -145,6 +145,8 @@ class EgoVlaPipeline:
             "schema_version": "vla_frame_record/v1",
             "pipeline_version": __version__,
         }
+        if ctx.extra:
+            metadata["stage_outputs"] = ctx.extra
         write_metadata(metadata_path, metadata)
         return metadata
 
