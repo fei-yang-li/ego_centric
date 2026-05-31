@@ -10,8 +10,9 @@ The initial implementation focuses on a reproducible data pipeline:
 - preserve timestamps, frame provenance, and camera metadata;
 - export JSONL records with slots for RGB, 3D pose, ego-motion, depth, object
   tracks, action labels, and language instructions;
-- keep estimator interfaces modular so depth, SLAM, object tracking, and action
-  recognition can be added without changing the dataset contract.
+- run as composable, registry-based **stages** so depth, SLAM/VO, object
+  tracking, and action segmentation can be added without changing the dataset
+  contract (see [docs/architecture.md](docs/architecture.md)).
 
 ## Why these fields matter for VLA
 
@@ -84,6 +85,64 @@ The overlay uses `body_pose_2d` and hand landmarks. It does not project
 MediaPipe world landmarks back to pixels unless a 2D estimate is present,
 because metric 3D projection requires camera calibration.
 
+## Pipeline architecture
+
+Processing runs as ordered, pluggable stages: **calibration** (per video) →
+**per-frame estimation** (pose, ...) → **record processors** (depth, objects,
+ego-motion) → **clip processor** (action segmentation + captioning). Each stage
+is a registered backend selected from config; by default all optional stages are
+`none`, so the output matches the pose-only pipeline.
+
+List what is registered:
+
+```bash
+ego-vla list-backends
+```
+
+Enable action segmentation + captioning (writes `segments.jsonl`):
+
+```bash
+ego-vla process video.mp4 --output outputs/run --config configs/with_action_segments.json
+```
+
+```json
+"actions": {
+  "backend": "segment_caption",
+  "extra": {"segmenter": "fixed_window", "captioner": "template", "window_sec": 2.0}
+}
+```
+
+The built-in `fixed_window` segmenter and `template` captioner are
+dependency-free baselines. Real captioners (Gemini API, or self-hosted
+Qwen2.5-VL) plug into the same `captioner` slot. See
+[docs/architecture.md](docs/architecture.md) for the full design and how to add
+a backend.
+
+### Geometry & perception backends
+
+The calibration, depth, ego-motion, and object stages ship real, open-source
+backends. Heavy dependencies are optional and imported lazily:
+
+```bash
+# CPU-only: pinhole-prior calibration + up-to-scale visual odometry
+ego-vla process video.mp4 --output outputs/run \
+  --config configs/perception_stack.json --depth-backend none --objects-backend none
+
+# Add monocular depth (Depth Anything V2) and open-vocab object tracks
+pip install -e ".[depth]" ".[objects-openvocab]"
+ego-vla process video.mp4 --output outputs/run --config configs/perception_stack.json
+```
+
+| Stage | CPU-ready backend | Heavier options |
+| --- | --- | --- |
+| Calibration | `pinhole_prior`, `opencv_checkerboard` | `colmap` |
+| Depth | — | `depth_anything_v2`(+`_metric`), `metric3d`, `unidepth` |
+| Objects | — | `yolo` (ByteTrack), `grounding_dino` |
+| Ego-motion | `opencv_vo` | `dpvo`, `droid_slam`, `orbslam3` |
+
+See the [backend catalog](docs/architecture.md#backend-catalog) for per-backend
+config keys and install notes.
+
 ## Commands
 
 ```bash
@@ -92,6 +151,7 @@ ego-vla process video.mp4 --output outputs/run --config configs/default.json
 ego-vla inspect outputs/run
 ego-vla visualize-data outputs/run --output outputs/run/report.html
 ego-vla render-pose outputs/run --output outputs/run/pose_overlay.mp4
+ego-vla list-backends
 ego-vla schema
 ```
 

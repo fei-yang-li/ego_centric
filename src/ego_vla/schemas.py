@@ -76,6 +76,59 @@ class ActionEstimate:
 
 
 @dataclass(slots=True)
+class CameraCalibration:
+    """Per-video camera calibration produced by a pre-processing stage.
+
+    Calibration is the metric anchor for depth and SLAM/VO: without it those
+    backends can only produce up-to-scale estimates.
+    """
+
+    backend: str = "none"
+    status: str = "not_computed"
+    coordinate_frame: str = "camera"
+    intrinsics: dict[str, float] | None = None
+    distortion: list[float] | None = None
+    image_width: int | None = None
+    image_height: int | None = None
+    metric_scale: bool | None = None
+    confidence: float | None = None
+    notes: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return _drop_none(asdict(self))
+
+
+@dataclass(slots=True)
+class SegmentRecord:
+    """A clip-level record: a contiguous slice of frames with an optional
+    action label, language instruction, and free-text caption.
+
+    Segments are produced by a clip stage (temporal segmentation + captioning)
+    and written to ``segments.jsonl`` alongside the per-frame ``records.jsonl``.
+    """
+
+    segment_id: str
+    episode_id: str
+    start_sec: float
+    end_sec: float
+    start_frame: int
+    end_frame: int
+    frame_ids: list[str] = field(default_factory=list)
+    key_frame_ids: list[str] = field(default_factory=list)
+    label: str | None = None
+    instruction: str | None = None
+    caption: str | None = None
+    objects: list[str] = field(default_factory=list)
+    confidence: float | None = None
+    status: str = "ok"
+    source: dict[str, Any] = field(default_factory=dict)
+    notes: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return _drop_none(asdict(self))
+
+
+@dataclass(slots=True)
 class FrameEstimate:
     body_pose_3d: PoseEstimate | None = None
     body_pose_2d: PoseEstimate | None = None

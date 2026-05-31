@@ -21,6 +21,23 @@ dependencies = [
 vision = [
   "mediapipe"
 ]
+# Monocular depth (Depth Anything V2 via transformers). Install a torch build
+# that matches your platform/CUDA from https://pytorch.org for GPU support.
+depth = [
+  "torch",
+  "transformers",
+  "pillow"
+]
+# Object detection + tracking (Ultralytics YOLO with built-in ByteTrack).
+objects = [
+  "ultralytics"
+]
+# Open-vocabulary detection (Grounding DINO via transformers).
+objects-openvocab = [
+  "torch",
+  "transformers",
+  "pillow"
+]
 dev = []
 
 [project.scripts]

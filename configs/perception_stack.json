@@ -1,0 +1,38 @@
+{
+  "dataset": {
+    "name": "egocentric_vla_debug"
+  },
+  "video": {
+    "sample_rate_hz": 4.0,
+    "max_frames": null
+  },
+  "camera": {
+    "intrinsics": null,
+    "coordinate_frame": "camera"
+  },
+  "calibration": {
+    "backend": "pinhole_prior",
+    "horizontal_fov_deg": 70.0
+  },
+  "pose": {
+    "backend": "mediapipe"
+  },
+  "depth": {
+    "backend": "depth_anything_v2",
+    "device": "cuda",
+    "max_side": 768,
+    "encoding": "png16"
+  },
+  "objects": {
+    "backend": "grounding_dino",
+    "prompt": "hand. cup. bottle. knife. plate.",
+    "box_threshold": 0.3
+  },
+  "ego_motion": {
+    "backend": "opencv_vo",
+    "n_features": 2000
+  },
+  "actions": {
+    "backend": "none"
+  }
+}

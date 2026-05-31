@@ -29,6 +29,23 @@ class JsonlRecordWriter:
         self.close()
 
 
+def write_jsonl(path: str | Path, items: Iterable[Any]) -> int:
+    """Write an iterable of records (objects with ``to_dict`` or plain dicts).
+
+    Returns the number of lines written.
+    """
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    count = 0
+    with output_path.open("w", encoding="utf-8") as handle:
+        for item in items:
+            payload = item.to_dict() if hasattr(item, "to_dict") else item
+            json.dump(payload, handle, ensure_ascii=False)
+            handle.write("\n")
+            count += 1
+    return count
+
+
 def write_metadata(path: str | Path, metadata: dict[str, Any]) -> None:
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)

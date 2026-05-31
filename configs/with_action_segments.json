@@ -1,0 +1,36 @@
+{
+  "dataset": {
+    "name": "egocentric_vla_debug",
+    "language_instruction": null
+  },
+  "video": {
+    "sample_rate_hz": 5.0,
+    "max_frames": null
+  },
+  "camera": {
+    "intrinsics": null,
+    "coordinate_frame": "camera"
+  },
+  "calibration": {
+    "backend": "none"
+  },
+  "pose": {
+    "backend": "mediapipe"
+  },
+  "depth": {
+    "backend": "none"
+  },
+  "ego_motion": {
+    "backend": "none"
+  },
+  "objects": {
+    "backend": "none"
+  },
+  "actions": {
+    "backend": "segment_caption",
+    "segmenter": "fixed_window",
+    "captioner": "template",
+    "window_sec": 1.0,
+    "stride_sec": 1.0
+  }
+}

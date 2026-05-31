@@ -15,6 +15,10 @@
     "intrinsics": null,
     "coordinate_frame": "camera"
   },
+  "calibration": {
+    "backend": "none",
+    "extra": {}
+  },
   "pose": {
     "backend": "mediapipe",
     "model_complexity": 1,
@@ -24,15 +28,19 @@
     "auto_download_model": true
   },
   "depth": {
-    "backend": "none"
+    "backend": "none",
+    "extra": {}
   },
   "ego_motion": {
-    "backend": "none"
+    "backend": "none",
+    "extra": {}
   },
   "objects": {
-    "backend": "none"
+    "backend": "none",
+    "extra": {}
   },
   "actions": {
-    "backend": "none"
+    "backend": "none",
+    "extra": {}
   }
 }
