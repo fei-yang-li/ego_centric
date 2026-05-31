@@ -24,17 +24,68 @@ video.mp4
 
 ## Stage types
 
-| Stage | Protocol | Scope | Built-in backends | Future backends |
-| --- | --- | --- | --- | --- |
-| Calibration | `PreProcessor` | per video | `none` (forward `camera.intrinsics`) | OpenCV checkerboard, COLMAP self-cal |
-| Pose | `FrameEstimator` | per frame | `none`, `mediapipe` | other body/hand models |
-| Depth | `RecordProcessor` | per frame (batchable) | `none` | Depth Anything V2, Metric3D, UniDepth |
-| Objects | `RecordProcessor` | frame detect + cross-frame track | `none` | YOLO / Grounding DINO + ByteTrack, SAM2 |
-| Ego-motion | `RecordProcessor` | sequence | `none` | DPVO, DROID-SLAM, ORB-SLAM3 |
-| Actions | `ClipProcessor` | clip | `none`, `segment_caption` | learned segmenters, Gemini / Qwen2.5-VL captioners |
+| Stage | Protocol | Scope | Backends |
+| --- | --- | --- | --- |
+| Calibration | `PreProcessor` | per video | `none`, `pinhole_prior`, `opencv_checkerboard`, `colmap` |
+| Pose | `FrameEstimator` | per frame | `none`, `mediapipe` |
+| Depth | `RecordProcessor` | per frame (batchable) | `none`, `depth_anything_v2`, `depth_anything_v2_metric`, `metric3d`, `unidepth` |
+| Objects | `RecordProcessor` | frame detect + cross-frame track | `none`, `yolo`, `grounding_dino` |
+| Ego-motion | `RecordProcessor` | sequence | `none`, `opencv_vo`, `dpvo`, `droid_slam`, `orbslam3` |
+| Actions | `ClipProcessor` | clip | `none`, `segment_caption` (scaffold; real VLM captioners TBD) |
 
 All protocols live in [`stages.py`](../src/ego_vla/stages.py); each owns a
-`Registry` from [`registry.py`](../src/ego_vla/registry.py).
+`Registry` from [`registry.py`](../src/ego_vla/registry.py). Run
+`ego-vla list-backends` to print what is registered.
+
+## Backend catalog
+
+Heavy/optional dependencies are imported lazily, so a backend only pulls its
+deps when selected. Selecting one whose deps are missing raises an actionable
+install error. CPU-capable backends are marked ✓.
+
+### Calibration (metric anchor for depth + ego-motion)
+
+| Backend | CPU | Deps | Config `extra` |
+| --- | --- | --- | --- |
+| `none` | ✓ | — | forwards `camera.intrinsics` |
+| `pinhole_prior` | ✓ | core | `horizontal_fov_deg` (default 70) |
+| `opencv_checkerboard` | ✓ | core (OpenCV) | `images_dir`, `pattern_size` `[cols,rows]`, `square_size_m` |
+| `colmap` | ✓* | `colmap` binary | `images_dir`, `camera_model` (experimental SfM self-cal) |
+
+### Depth (`pip install -e ".[depth]"`)
+
+| Backend | Deps | Metric | Notes |
+| --- | --- | --- | --- |
+| `depth_anything_v2` | torch, transformers | no | relative depth (Depth Anything V2) |
+| `depth_anything_v2_metric` | torch, transformers | yes | metric checkpoints (indoor/outdoor) |
+| `metric3d` | torch (torch.hub) | yes | experimental adapter |
+| `unidepth` | torch + UniDepth | yes | experimental adapter |
+
+Depth maps are written to `<output>/depth/` as 16-bit PNG (metric = mm; relative
+= per-frame normalised) or float32 `.npy` (`extra.encoding: "npy"`). GPU strongly
+recommended; install the torch build matching your CUDA from pytorch.org.
+
+### Objects
+
+| Backend | Install | Tracking | Notes |
+| --- | --- | --- | --- |
+| `yolo` | `".[objects]"` (ultralytics) | built-in ByteTrack | closed-set; `extra.model`, `conf`, `classes` |
+| `grounding_dino` | `".[objects-openvocab]"` | IoU tracker | open-vocab via `extra.prompt`, `box_threshold` |
+
+`ObjectEstimate.mask_path` is reserved for a future SAM2 mask-propagation backend.
+
+### Ego-motion
+
+| Backend | CPU | Deps | Scale | Notes |
+| --- | --- | --- | --- | --- |
+| `opencv_vo` | ✓ | core (OpenCV) | up-to-scale | ORB + essential matrix; uses calibration intrinsics |
+| `dpvo` | — | DPVO + CUDA | up-to-scale | learned VO; external setup |
+| `droid_slam` | — | DROID-SLAM + CUDA | up-to-scale | high accuracy, high VRAM |
+| `orbslam3` | varies | ORB-SLAM3 build | up-to-scale | classical feature SLAM |
+
+Monocular trajectories are up-to-scale; anchor metric scale with calibration +
+metric depth (or a known baseline/IMU). The resolved trajectory summary is
+written to `metadata.stage_outputs.ego_motion`.
 
 ## The action stage (segmentation + captioning)
 

@@ -118,6 +118,31 @@ Qwen2.5-VL) plug into the same `captioner` slot. See
 [docs/architecture.md](docs/architecture.md) for the full design and how to add
 a backend.
 
+### Geometry & perception backends
+
+The calibration, depth, ego-motion, and object stages ship real, open-source
+backends. Heavy dependencies are optional and imported lazily:
+
+```bash
+# CPU-only: pinhole-prior calibration + up-to-scale visual odometry
+ego-vla process video.mp4 --output outputs/run \
+  --config configs/perception_stack.json --depth-backend none --objects-backend none
+
+# Add monocular depth (Depth Anything V2) and open-vocab object tracks
+pip install -e ".[depth]" ".[objects-openvocab]"
+ego-vla process video.mp4 --output outputs/run --config configs/perception_stack.json
+```
+
+| Stage | CPU-ready backend | Heavier options |
+| --- | --- | --- |
+| Calibration | `pinhole_prior`, `opencv_checkerboard` | `colmap` |
+| Depth | — | `depth_anything_v2`(+`_metric`), `metric3d`, `unidepth` |
+| Objects | — | `yolo` (ByteTrack), `grounding_dino` |
+| Ego-motion | `opencv_vo` | `dpvo`, `droid_slam`, `orbslam3` |
+
+See the [backend catalog](docs/architecture.md#backend-catalog) for per-backend
+config keys and install notes.
+
 ## Commands
 
 ```bash

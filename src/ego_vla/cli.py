@@ -30,6 +30,11 @@ def main(argv: list[str] | None = None) -> int:
     process_parser.add_argument("--pose-backend", choices=["mediapipe", "none"], default=None)
     process_parser.add_argument("--pose-model", type=Path, default=None, help="Path to a MediaPipe .task model asset.")
     process_parser.add_argument("--language-instruction", type=str, default=None)
+    process_parser.add_argument("--calibration-backend", type=str, default=None)
+    process_parser.add_argument("--depth-backend", type=str, default=None)
+    process_parser.add_argument("--objects-backend", type=str, default=None)
+    process_parser.add_argument("--ego-motion-backend", type=str, default=None)
+    process_parser.add_argument("--actions-backend", type=str, default=None)
 
     inspect_parser = subparsers.add_parser("inspect", help="Summarize an output dataset directory.")
     inspect_parser.add_argument("dataset_dir", type=Path)
@@ -78,6 +83,16 @@ def main(argv: list[str] | None = None) -> int:
             config.pose.model_asset_path = str(args.pose_model)
         if args.language_instruction is not None:
             config.dataset.language_instruction = args.language_instruction
+        if args.calibration_backend is not None:
+            config.calibration.backend = args.calibration_backend
+        if args.depth_backend is not None:
+            config.depth.backend = args.depth_backend
+        if args.objects_backend is not None:
+            config.objects.backend = args.objects_backend
+        if args.ego_motion_backend is not None:
+            config.ego_motion.backend = args.ego_motion_backend
+        if args.actions_backend is not None:
+            config.actions.backend = args.actions_backend
         metadata = EgoVlaPipeline(config).process(args.video, args.output)
         print(json.dumps(metadata["output"], indent=2))
         return 0
