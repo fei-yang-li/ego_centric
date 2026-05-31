@@ -61,7 +61,10 @@ def write_dataset_report(
 
     summary = summarize_records(records)
     metadata = _load_metadata(dataset_dir)
-    html_text = _build_report_html(dataset_dir, output_path, records, summary, metadata, max_records)
+    segments = _load_segments(dataset_dir)
+    html_text = _build_report_html(
+        dataset_dir, output_path, records, summary, metadata, segments, max_records
+    )
     output_path.write_text(html_text, encoding="utf-8")
     return {
         "report_path": str(output_path),
@@ -69,6 +72,7 @@ def write_dataset_report(
         "body_pose_2d_frames": summary["body_pose_2d_frames"],
         "body_pose_3d_frames": summary["body_pose_3d_frames"],
         "hand_frames": summary["hand_frames"],
+        "segment_count": len(segments),
     }
 
 
@@ -170,12 +174,20 @@ def _load_metadata(dataset_dir: Path) -> dict[str, Any]:
     return json.loads(metadata_path.read_text(encoding="utf-8"))
 
 
+def _load_segments(dataset_dir: Path) -> list[dict[str, Any]]:
+    segments_path = dataset_dir / "segments.jsonl"
+    if not segments_path.exists():
+        return []
+    return list(iter_jsonl(segments_path))
+
+
 def _build_report_html(
     dataset_dir: Path,
     output_path: Path,
     records: list[dict[str, Any]],
     summary: dict[str, Any],
     metadata: dict[str, Any],
+    segments: list[dict[str, Any]],
     max_records: int,
 ) -> str:
     record_rows = "\n".join(
@@ -186,6 +198,7 @@ def _build_report_html(
         for key, value in summary.items()
     )
     metadata_block = html.escape(json.dumps(metadata, indent=2, ensure_ascii=False))
+    segments_section = _segments_section(segments, max_records)
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -209,6 +222,7 @@ def _build_report_html(
   <ul>{summary_items}</ul>
   <h2>Metadata</h2>
   <details open><summary>metadata.json</summary><pre>{metadata_block}</pre></details>
+  {segments_section}
   <h2>Sample records</h2>
   <table>
     <thead>
@@ -227,6 +241,46 @@ def _build_report_html(
 </body>
 </html>
 """
+
+
+def _segments_section(segments: list[dict[str, Any]], max_rows: int) -> str:
+    if not segments:
+        return ""
+    rows = "\n".join(_segment_row(segment) for segment in segments[:max_rows])
+    return f"""<h2>Action segments ({len(segments)})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Segment</th>
+        <th>Span</th>
+        <th>Label / instruction</th>
+        <th>Caption</th>
+        <th>Source</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows}
+    </tbody>
+  </table>"""
+
+
+def _segment_row(segment: dict[str, Any]) -> str:
+    start = segment.get("start_sec", "")
+    end = segment.get("end_sec", "")
+    label = segment.get("label") or ""
+    instruction = segment.get("instruction") or ""
+    caption = segment.get("caption") or ""
+    source = json.dumps(segment.get("source", {}), ensure_ascii=False)
+    label_block = html.escape(label)
+    if instruction:
+        label_block += f'<br><span class="small">{html.escape(instruction)}</span>'
+    return f"""<tr>
+  <td>{html.escape(str(segment.get("segment_id", "")))}<br><span class="small">{len(segment.get("frame_ids", []))} frames</span></td>
+  <td>{html.escape(str(start))}&ndash;{html.escape(str(end))} s</td>
+  <td>{label_block}</td>
+  <td>{html.escape(caption)}</td>
+  <td><span class="small">{html.escape(source)}</span></td>
+</tr>"""
 
 
 def _record_row(dataset_dir: Path, output_path: Path, record: dict[str, Any]) -> str:

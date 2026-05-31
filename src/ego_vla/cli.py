@@ -54,6 +54,11 @@ def main(argv: list[str] | None = None) -> int:
 
     subparsers.add_parser("schema", help="Print an example VLA frame record.")
 
+    subparsers.add_parser(
+        "list-backends",
+        help="List registered backends for each pipeline stage.",
+    )
+
     args = parser.parse_args(argv)
 
     if args.command == "init-config":
@@ -112,6 +117,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "schema":
         print(json.dumps(json_schema_example(), indent=2))
+        return 0
+
+    if args.command == "list-backends":
+        from ego_vla.stages import available_backends
+
+        print(json.dumps(available_backends(), indent=2))
         return 0
 
     parser.error(f"Unknown command: {args.command}")

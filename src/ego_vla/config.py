@@ -49,6 +49,7 @@ class ProcessingConfig:
     dataset: DatasetConfig = field(default_factory=DatasetConfig)
     video: VideoConfig = field(default_factory=VideoConfig)
     camera: CameraConfig = field(default_factory=CameraConfig)
+    calibration: BackendConfig = field(default_factory=BackendConfig)
     pose: PoseConfig = field(default_factory=PoseConfig)
     depth: BackendConfig = field(default_factory=BackendConfig)
     ego_motion: BackendConfig = field(default_factory=BackendConfig)
@@ -61,6 +62,7 @@ class ProcessingConfig:
             dataset=_load_dataclass(DatasetConfig, raw.get("dataset", {})),
             video=_load_dataclass(VideoConfig, raw.get("video", {})),
             camera=_load_dataclass(CameraConfig, raw.get("camera", {})),
+            calibration=_load_backend(raw.get("calibration", {})),
             pose=_load_dataclass(PoseConfig, raw.get("pose", {})),
             depth=_load_backend(raw.get("depth", {})),
             ego_motion=_load_backend(raw.get("ego_motion", {})),
